@@ -10,7 +10,7 @@ import analyzeRoutes from "./routes/analyze.js";
 import historyRoutes from "./routes/history.js";
 
 const app = express();
-
+app.set("trust proxy", 1);
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
 app.use(express.json());
 app.use(morgan("dev"));
