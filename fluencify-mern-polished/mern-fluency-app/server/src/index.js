@@ -19,7 +19,9 @@ app.use(morgan("dev"));
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 });
 app.use("/api/auth", authLimiter, authRoutes);
 
-app.use("/api/analyze", analyzeRoutes);
+// Analysis is the expensive call; cap it per IP so a public deployment can't be flooded.
+const analyzeLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 100 });
+app.use("/api/analyze", analyzeLimiter, analyzeRoutes);
 app.use("/api/history", historyRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));

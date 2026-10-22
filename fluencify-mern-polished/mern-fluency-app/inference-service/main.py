@@ -11,13 +11,15 @@ Run locally:
     uvicorn main:app --reload --port 8000
 """
 
+import hmac
 import json
 import os
 import shutil
 import tempfile
 import uuid
+from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -35,6 +37,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Shared secret between the Express API and this service. When INFERENCE_API_KEY is set
+# (it should be on any public deployment), /analyze rejects calls without the matching
+# X-API-Key header, so only your Express server can use the model. /health stays open.
+INFERENCE_API_KEY = os.environ.get("INFERENCE_API_KEY", "")
+
+
+def require_api_key(x_api_key: Optional[str] = Header(default=None)):
+    if INFERENCE_API_KEY and not hmac.compare_digest(x_api_key or "", INFERENCE_API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".webm", ".ogg"}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
 
@@ -51,7 +64,7 @@ def health():
     return {"status": "ok", "modelsReady": {m: _artifacts_present(m) for m in VALID_MODELS}}
 
 
-@app.post("/analyze")
+@app.post("/analyze", dependencies=[Depends(require_api_key)])
 async def analyze(
     audio: UploadFile = File(...),
     model: str = Form("whisper_ft_head"),
