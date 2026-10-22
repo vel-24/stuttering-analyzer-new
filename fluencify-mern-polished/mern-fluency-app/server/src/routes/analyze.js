@@ -55,10 +55,13 @@ router.post("/", requireAuth, upload.single("audio"), async (req, res) => {
 
     const inferenceUrl = `${process.env.INFERENCE_SERVICE_URL}/analyze`;
     const { data: result } = await axios.post(inferenceUrl, form, {
-      headers: form.getHeaders(),
+      headers: {
+        ...form.getHeaders(),
+        ...(process.env.INFERENCE_API_KEY ? { "X-API-Key": process.env.INFERENCE_API_KEY } : {}),
+      },
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
-      timeout: 120_000,
+      timeout: 240_000,
     });
 
     const attempt = await Attempt.create({
