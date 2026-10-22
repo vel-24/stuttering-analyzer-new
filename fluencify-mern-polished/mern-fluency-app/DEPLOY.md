@@ -21,16 +21,10 @@ Copy these files from the kit into the same places in your repo, then commit and
 | `server/src/index.js` | replaces the existing file (rate-limits /api/analyze) |
 | `client/vercel.json` | new file (lets page refreshes work) |
 
-**Pin the Python versions first (important).** Your `.joblib` models were saved with specific
-library versions, and a different version in the cloud can fail to load them or change results.
-On the computer where the app runs correctly, run:
-
-```
-pip freeze | findstr /i "xgboost scikit-learn joblib numpy scipy librosa torch transformers"
-```
-
-Put those exact versions into `inference-service/requirements.txt` (e.g. `xgboost==2.1.1`).
-Keep `torch` pinned too; the Dockerfile installs the CPU build first.
+**Python versions are pinned.** `inference-service/requirements.txt` pins the versions from the
+environment where the app was tested (numpy 2.4.6, scipy 1.17.1, scikit-learn 1.9.1, xgboost 3.2.0,
+joblib 1.6.0, librosa 0.11.0, torch 2.14.1, transformers 5.20.1), because the saved `.joblib` models
+can fail to load or change results under different versions.
 
 ## 1. MongoDB Atlas (free M0)
 
