@@ -13,9 +13,10 @@ ENV PATH=/home/user/.local/bin:$PATH \
 WORKDIR /home/user/app
 
 COPY --chown=user requirements.txt .
-# CPU-only PyTorch keeps the image small and fits the free CPU tier.
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements.txt
+# The extra index offers the CPU-only PyTorch build (small, fits the free CPU tier);
+# pip prefers it over the large default build, and falls back to PyPI if it is missing.
+RUN pip install --no-cache-dir -r requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Bake the base Whisper weights into the image so the first request doesn't have to download them.
 RUN python -c "from transformers import WhisperModel, WhisperFeatureExtractor; \
